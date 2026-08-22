@@ -11,7 +11,7 @@ function formatDate(iso: string): string {
 
 export function MetadataPanel({ apod }: { apod: Apod }) {
   return (
-    <div className="mx-auto max-w-170 px-4 md:px-8 py-8 ">
+    <div className="mx-auto max-w-170 rounded-2xl bg-hero-bg/5 px-4 py-8 backdrop-blur-md md:px-8">
       <h1 className="text-2xl font-semibold text-hero-fg">{apod.title}</h1>
       <p className="mt-1 text-sm text-muted">
         {formatDate(apod.date)}
