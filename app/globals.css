@@ -11,6 +11,7 @@
   --color-reading-bg: oklch(98% 0.01 70);
   --color-reading-fg: oklch(20% 0.01 70);
   --color-accent: oklch(78% 0.15 75); /* restrained amber */
+  --color-accent-foreground: var(--color-hero-bg); /* matches text-hero-bg already used on bg-accent elsewhere */
   --color-muted: oklch(60% 0.02 260);
   --font-sans: var(--font-inter);
   --font-serif: var(--font-source-serif);
@@ -41,7 +42,6 @@ body {
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
