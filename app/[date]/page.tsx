@@ -3,10 +3,8 @@ import { Hero } from "@/components/Hero";
 import { fetchApod } from "@/lib/nasa-client";
 import { validateApodDate, todayIsoDate } from "@/lib/date-range";
 import { isApodRateLimited } from "@/lib/rate-limit-guard";
+import { getRevalidateSeconds } from "@/lib/revalidate";
 import type { Apod } from "@/types/apod";
-
-const PAST_DATE_REVALIDATE_SECONDS = 60 * 60 * 24 * 365;
-const TODAY_REVALIDATE_SECONDS = 60 * 15;
 
 export default async function DatePage({
   params,
@@ -17,8 +15,7 @@ export default async function DatePage({
   const date = validateApodDate(rawDate);
   if (!date) notFound();
 
-  const isToday = date === todayIsoDate();
-  const revalidateSeconds = isToday ? TODAY_REVALIDATE_SECONDS : PAST_DATE_REVALIDATE_SECONDS;
+  const revalidateSeconds = getRevalidateSeconds(date, todayIsoDate());
 
   let initialData: Apod | undefined;
   if (!(await isApodRateLimited())) {

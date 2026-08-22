@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateApodDate, todayIsoDate } from "@/lib/date-range";
 import { apodRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/get-client-ip";
+import { getRevalidateSeconds } from "@/lib/revalidate";
 import {
   fetchApod,
   ApodNotFoundError,
@@ -9,12 +10,14 @@ import {
   ApodUpstreamError,
 } from "@/lib/nasa-client";
 
-// Past dates are immutable once published — cache for a year.
-// Today's entry can still change (late posting, corrections) — revalidate every 15 min.
-const PAST_DATE_REVALIDATE_SECONDS = 60 * 60 * 24 * 365;
-const TODAY_REVALIDATE_SECONDS = 60 * 15;
-
 export async function GET(request: NextRequest) {
+  const requestedDate = request.nextUrl.searchParams.get("date") ?? todayIsoDate();
+  const date = validateApodDate(requestedDate);
+
+  if (!date) {
+    return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+  }
+
   const ip = getClientIp(request.headers);
   const { success, limit, remaining, reset } = await apodRateLimit.limit(ip);
 
@@ -33,15 +36,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const requestedDate = request.nextUrl.searchParams.get("date") ?? todayIsoDate();
-  const date = validateApodDate(requestedDate);
-
-  if (!date) {
-    return NextResponse.json({ error: "Invalid date" }, { status: 400 });
-  }
-
-  const isToday = date === todayIsoDate();
-  const revalidateSeconds = isToday ? TODAY_REVALIDATE_SECONDS : PAST_DATE_REVALIDATE_SECONDS;
+  const today = todayIsoDate();
+  const isToday = date === today;
+  const revalidateSeconds = getRevalidateSeconds(date, today);
 
   try {
     const apod = await fetchApod(date, revalidateSeconds);
