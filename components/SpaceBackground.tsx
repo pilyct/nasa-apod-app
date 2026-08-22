@@ -31,6 +31,11 @@ export default function SpaceBackground() {
     let centerX = 0;
     let centerY = 0;
     let animationFrame: number;
+    // Pauses the loop while the tab is backgrounded — without this it kept
+    // redrawing ~600 stars every frame indefinitely with nothing visible,
+    // burning CPU/battery for no benefit (useCanvasCursor.ts pauses on
+    // blur for the same reason).
+    let running = !document.hidden;
 
     const stars: Star[] = [];
 
@@ -78,6 +83,8 @@ export default function SpaceBackground() {
     }
 
     function draw() {
+      if (!running) return;
+
       offsetX += (targetOffsetX - offsetX) * PARALLAX_EASE;
       offsetY += (targetOffsetY - offsetY) * PARALLAX_EASE;
 
@@ -126,17 +133,34 @@ export default function SpaceBackground() {
       animationFrame = requestAnimationFrame(draw);
     }
 
+    function onVisibilityChange() {
+      const wasRunning = running;
+      running = !document.hidden;
+      if (running && !wasRunning) {
+        // Browsers defer (not cancel) a pending rAF while hidden — it can
+        // still fire after we resume, see running=true by then, and
+        // reschedule itself, running alongside the fresh chain kicked off
+        // here. Cancel it first so there's only ever one chain, regardless
+        // of whether it already died naturally (its own next tick would
+        // have seen running=false and bailed) or is still pending.
+        cancelAnimationFrame(animationFrame);
+        draw();
+      }
+    }
+
     resize();
     initStars();
     draw();
 
     window.addEventListener("resize", resize);
     window.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       cancelAnimationFrame(animationFrame);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, []);
 

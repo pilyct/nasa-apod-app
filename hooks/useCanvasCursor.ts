@@ -159,6 +159,9 @@ export function useCanvasCursor() {
       document.addEventListener("touchstart", handleTouchStart);
       updatePosition(e);
       initLines();
+      // A blur before this first move sets running=false; render() bails
+      // out immediately unless it's explicitly turned back on here.
+      running = true;
       render();
     }
 
