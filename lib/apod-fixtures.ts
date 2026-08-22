@@ -10,10 +10,8 @@ const FIXTURES: Array<Omit<Apod, "date">> = [
     explanation:
       "A mock APOD image entry served locally because MOCK_APOD=true, standing in for a real NASA response so the UI can be exercised without a network call.",
     mediaType: "image",
-    imageUrl:
-      "https://apod.nasa.gov/apod/image/2306/M51LRGBHaOIII-Blanchard1024.jpg",
-    hdImageUrl:
-      "https://apod.nasa.gov/apod/image/2306/M51LRGBHaOIII-Blanchard.jpg",
+    imageUrl: "/universe.png",
+    hdImageUrl: "/universe.png",
     copyright: "Mock Copyright Holder",
   },
   {
@@ -21,8 +19,7 @@ const FIXTURES: Array<Omit<Apod, "date">> = [
     explanation:
       "A second mock image fixture so browsing between dates in mock mode shows visible variety instead of the same picture every time.",
     mediaType: "image",
-    imageUrl:
-      "https://apod.nasa.gov/apod/image/2310/GC_2000LY_JamesMcArthur1024.jpg",
+    imageUrl: "/universe.png",
   },
   {
     title: "Mock: A Sample Video Entry",
