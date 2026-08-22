@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateApodDate, todayIsoDate } from "@/lib/date-range";
+import { apodRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/get-client-ip";
 import {
   fetchApod,
   ApodNotFoundError,
@@ -13,6 +15,24 @@ const PAST_DATE_REVALIDATE_SECONDS = 60 * 60 * 24 * 365;
 const TODAY_REVALIDATE_SECONDS = 60 * 15;
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { success, limit, remaining, reset } = await apodRateLimit.limit(ip);
+
+  if (!success) {
+    const retryAfterSeconds = Math.max(0, Math.ceil((reset - Date.now()) / 1000));
+    return NextResponse.json(
+      { error: "Too many requests — try again shortly" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(retryAfterSeconds),
+          "X-RateLimit-Limit": String(limit),
+          "X-RateLimit-Remaining": String(remaining),
+        },
+      },
+    );
+  }
+
   const requestedDate = request.nextUrl.searchParams.get("date") ?? todayIsoDate();
   const date = validateApodDate(requestedDate);
 
