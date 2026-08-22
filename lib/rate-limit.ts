@@ -25,8 +25,13 @@ let warnedOnce = false;
 function getRatelimit(): Ratelimit | null {
   if (cachedRatelimit !== undefined) return cachedRatelimit;
 
+  // Matches Redis.fromEnv()'s own fallback (see @upstash/redis) — without
+  // checking KV_REST_API_*, a Vercel-KV-style deployment that only sets
+  // those would make this evaluate false and silently disable rate
+  // limiting even though Redis.fromEnv() would connect just fine.
   const configured = Boolean(
-    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
+    (process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL) &&
+      (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN),
   );
 
   cachedRatelimit = configured
@@ -55,6 +60,15 @@ export const apodRateLimit = {
       return { success: true, limit: MAX_REQUESTS, remaining: MAX_REQUESTS, reset: Date.now() };
     }
 
-    return ratelimit.limit(identifier);
+    try {
+      return await ratelimit.limit(identifier);
+    } catch (error) {
+      // A genuine Redis/network error (not the library's own internal
+      // timeout, which already fails open) shouldn't crash every caller —
+      // fail open here once, so app/api/apod/route.ts and
+      // lib/rate-limit-guard.ts don't each need their own try/catch.
+      console.error("[rate-limit] check failed, allowing request:", error);
+      return { success: true, limit: MAX_REQUESTS, remaining: MAX_REQUESTS, reset: Date.now() };
+    }
   },
 };

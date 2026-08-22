@@ -13,6 +13,9 @@ import { getClientIp } from "@/lib/get-client-ip";
 // per revalidate window, so this doesn't cause extra NASA requests on its
 // own; it only guards against many distinct dates being requested in a burst.
 export async function isApodRateLimited(): Promise<boolean> {
+  // apodRateLimit.limit() already fails open (success: true) on its own
+  // errors — not configured, or a genuine Redis/network failure — so no
+  // try/catch is needed here.
   const headersList = await headers();
   const ip = getClientIp(headersList);
   const { success } = await apodRateLimit.limit(ip);

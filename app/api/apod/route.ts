@@ -18,6 +18,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
   }
 
+  // apodRateLimit.limit() already fails open (success: true) on its own
+  // errors — not configured, or a genuine Redis/network failure — so no
+  // try/catch is needed here.
   const ip = getClientIp(request.headers);
   const { success, limit, remaining, reset } = await apodRateLimit.limit(ip);
 
@@ -42,9 +45,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const apod = await fetchApod(date, revalidateSeconds);
+    // Reuse the already-computed revalidateSeconds rather than re-deriving
+    // from the constants — if getRevalidateSeconds() ever grows a third
+    // tier, this stays correct automatically instead of silently drifting.
     const cacheControl = isToday
-      ? "public, s-maxage=900, stale-while-revalidate=3600"
-      : "public, max-age=31536000, immutable";
+      ? `public, s-maxage=${revalidateSeconds}, stale-while-revalidate=${revalidateSeconds * 4}`
+      : `public, max-age=${revalidateSeconds}, immutable`;
 
     return NextResponse.json(apod, { headers: { "Cache-Control": cacheControl } });
   } catch (error) {
