@@ -36,7 +36,7 @@ export function DateNav({ date }: { date: string }) {
   }, [prevDate, nextDate, canGoPrev, canGoNext]);
 
   return (
-    <div className="flex items-center gap-1 md:gap-3">
+    <div className="flex items-center gap-2 md:gap-3">
       <Tooltip.Root disabled={!canGoPrev}>
         <Tooltip.Trigger
           render={
