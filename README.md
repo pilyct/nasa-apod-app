@@ -48,6 +48,14 @@ schemas/
 
 The browser never talks to NASA directly — `app/api/apod/route.ts` is the sole proxy, and `lib/nasa-client.ts` is the only module that reads the API key or calls `api.nasa.gov`. This keeps the key server-side and gives the app one place to normalize errors, caching, and NASA's response shape.
 
+## Rate limiting
+
+`/api/apod` is rate limited to 30 requests/minute per IP via a sliding-window limiter (`lib/rate-limit.ts`) backed by Upstash Redis, so quota-heavy or scripted traffic can't burn through the NASA API key. The limit is enforced in shared Redis rather than in-memory, so it holds correctly across serverless instances. `scripts/verify-shared-rate-limit.mjs` is a manual diagnostic that proves this: it simulates two independent serverless instances and confirms the limit is enforced on their *combined* traffic. Run it with:
+
+```bash
+node --env-file=.env.local scripts/verify-shared-rate-limit.mjs
+```
+
 ## Getting started
 
 ### Prerequisites
