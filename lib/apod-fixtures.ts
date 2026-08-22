@@ -12,7 +12,8 @@ const FIXTURES: Array<Omit<Apod, "date">> = [
     mediaType: "image",
     imageUrl:
       "https://apod.nasa.gov/apod/image/2306/M51LRGBHaOIII-Blanchard1024.jpg",
-    hdImageUrl: "https://apod.nasa.gov/apod/image/2306/M51LRGBHaOIII-Blanchard.jpg",
+    hdImageUrl:
+      "https://apod.nasa.gov/apod/image/2306/M51LRGBHaOIII-Blanchard.jpg",
     copyright: "Mock Copyright Holder",
   },
   {
@@ -20,14 +21,15 @@ const FIXTURES: Array<Omit<Apod, "date">> = [
     explanation:
       "A second mock image fixture so browsing between dates in mock mode shows visible variety instead of the same picture every time.",
     mediaType: "image",
-    imageUrl: "https://apod.nasa.gov/apod/image/2310/GC_2000LY_JamesMcArthur1024.jpg",
+    imageUrl:
+      "https://apod.nasa.gov/apod/image/2310/GC_2000LY_JamesMcArthur1024.jpg",
   },
   {
     title: "Mock: A Sample Video Entry",
     explanation:
       "A mock video entry (YouTube embed) so the video code path in MediaFrame can be exercised in mock mode too.",
     mediaType: "video",
-    videoEmbedUrl: "https://www.youtube.com/embed/M7lc1UVf-VE",
+    videoEmbedUrl: "https://www.youtube.com/embed/x896_J1k8rM",
   },
 ];
 

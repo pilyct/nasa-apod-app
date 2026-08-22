@@ -46,7 +46,7 @@ export function MediaFrame({ apod }: { apod: Apod }) {
             src={apod.videoEmbedUrl}
             title={apod.title}
             className="h-full w-full"
-            sandbox="allow-scripts allow-same-origin allow-presentation"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
             allow="encrypted-media; picture-in-picture"
             allowFullScreen
           />
