@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Source_Serif_4, Geist } from "next/font/google";
 import { QueryProvider } from "@/components/QueryProvider";
 import CanvasCursor from "@/components/CanvasCursor";
+import SpaceBackground from "@/components/SpaceBackground";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -34,12 +35,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         sourceSerif.variable,
         "font-sans",
         geist.variable,
-        "bg-hero-bg",
+        "bg-main-bg",
       )}
     >
-      <body className="min-h-full flex flex-col bg-hero-bg text-hero-fg">
+      <body className="min-h-full flex flex-col text-hero-fg">
+        <SpaceBackground />
         <CanvasCursor />
-        <QueryProvider>{children}</QueryProvider>
+        <div className="relative z-10 flex min-h-full flex-1 flex-col">
+          <QueryProvider>{children}</QueryProvider>
+        </div>
       </body>
     </html>
   );

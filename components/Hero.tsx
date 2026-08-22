@@ -37,11 +37,18 @@ export function Hero({
     <div>
       {isOffline && <OfflineBanner />}
 
-      <div className="flex flex-col gap-2 md:flex-row items-center justify-between bg-hero-bg px-4 py-3">
+      <div className="flex flex-col gap-2 md:flex-row items-center justify-between px-4 py-3">
         <div className="flex flex-col items-center md:items-start justify-between">
-          <span className="font-sans text-2xl md:text-3xl font-semibold tracking-wide text-hero-fg">
-            Cosmica
-          </span>
+          <div className="flex items-center">
+            <span className="font-sans text-2xl md:text-3xl font-semibold tracking-wide text-hero-fg">
+              C
+            </span>
+            <img src="/icon.png" alt="" className="h-6 md:w-6" />
+
+            <span className="font-sans text-2xl md:text-3xl font-semibold tracking-wide text-hero-fg">
+              smica
+            </span>
+          </div>
           <span className="font-mono text-xs md:text-sm font-medium tracking-wide text-hero-fg">
             Astronomy Picture of the Day
           </span>
@@ -63,7 +70,7 @@ export function Hero({
         ) && <ErrorCard message={error.message} onRetry={() => refetch()} />}
 
       {!isLoading && !error && data && (
-        <div className="flex flex-col md:flex-row items-center justify-between px-4 bg-hero-bg">
+        <div className="flex flex-col md:flex-row items-center justify-between px-4">
           <MediaFrame apod={data} />
           <MetadataPanel apod={data} />
         </div>

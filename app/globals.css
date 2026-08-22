@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  --color-main-bg: oklch(0% 0 0);
   --color-hero-bg: oklch(22% 0.02 260);
   --color-hero-fg: oklch(96% 0.01 260);
   --color-reading-bg: oklch(98% 0.01 70);
