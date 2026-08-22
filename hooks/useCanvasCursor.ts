@@ -163,7 +163,10 @@ export function useCanvasCursor() {
     }
 
     function handleFocus() {
-      if (!running) {
+      // lines stays empty until the first pointer interaction (handleFirstMove
+      // calls initLines()) — render() indexes into it unconditionally, so
+      // refocusing before ever moving the pointer would otherwise throw.
+      if (!running && lines.length > 0) {
         running = true;
         render();
       }
