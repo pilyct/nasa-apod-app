@@ -170,7 +170,7 @@ export function useCanvasCursor() {
     }
 
     function handleBlur() {
-      running = true;
+      running = false;
     }
 
     document.addEventListener("mousemove", handleFirstMove);
