@@ -23,6 +23,16 @@ export function useApod(date: string, initialData?: Apod) {
     queryKey: ["apod", date],
     queryFn: () => fetchApodByDate(date),
     initialData,
+    // Override QueryProvider's global retry: 1 — a 4xx (no APOD for this
+    // date, or a malformed date) can never succeed by retrying, so retrying
+    // it anyway just adds latency and burns another request against the
+    // rate limit for free.
+    retry: (failureCount, error) => {
+      if (error instanceof ApodFetchError && error.status >= 400 && error.status < 500) {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
 }
 
