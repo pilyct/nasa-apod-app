@@ -37,12 +37,12 @@ export function Hero({
     <div>
       {isOffline && <OfflineBanner />}
 
-      <div className="flex flex-wrap items-center justify-between bg-hero-bg px-4 py-3">
-        <div className="flex flex-col items-start justify-between">
-          <span className="font-sans text-md md:text-xl font-semibold tracking-wide text-hero-fg">
+      <div className="flex flex-col gap-2 md:flex-row items-center justify-between bg-hero-bg px-4 py-3">
+        <div className="flex flex-col items-center md:items-start justify-between">
+          <span className="font-sans text-2xl md:text-3xl font-semibold tracking-wide text-hero-fg">
             Cosmica
           </span>
-          <span className="font-mono text-[11px] md:text-sm font-medium tracking-wide text-hero-fg">
+          <span className="font-mono text-xs md:text-sm font-medium tracking-wide text-hero-fg">
             Astronomy Picture of the Day
           </span>
         </div>
