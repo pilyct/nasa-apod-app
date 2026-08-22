@@ -9,11 +9,52 @@ import { Redis } from "@upstash/redis";
 const MAX_REQUESTS = 30;
 const WINDOW = "60 s";
 
-const redis = Redis.fromEnv();
+export interface RateLimitResult {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+}
 
-export const apodRateLimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(MAX_REQUESTS, WINDOW),
-  prefix: "ratelimit:apod",
-  analytics: true,
-});
+let cachedRatelimit: Ratelimit | null | undefined;
+let warnedOnce = false;
+
+// Lazily constructed (and memoized) so a missing config doesn't crash the
+// module on import — it degrades to "rate limiting disabled" instead, which
+// matters for local dev without Upstash credentials configured.
+function getRatelimit(): Ratelimit | null {
+  if (cachedRatelimit !== undefined) return cachedRatelimit;
+
+  const configured = Boolean(
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
+  );
+
+  cachedRatelimit = configured
+    ? new Ratelimit({
+        redis: Redis.fromEnv(),
+        limiter: Ratelimit.slidingWindow(MAX_REQUESTS, WINDOW),
+        prefix: "ratelimit:apod",
+        analytics: true,
+      })
+    : null;
+
+  return cachedRatelimit;
+}
+
+export const apodRateLimit = {
+  async limit(identifier: string): Promise<RateLimitResult> {
+    const ratelimit = getRatelimit();
+
+    if (!ratelimit) {
+      if (!warnedOnce) {
+        console.warn(
+          "[rate-limit] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not set — rate limiting is disabled for this run.",
+        );
+        warnedOnce = true;
+      }
+      return { success: true, limit: MAX_REQUESTS, remaining: MAX_REQUESTS, reset: Date.now() };
+    }
+
+    return ratelimit.limit(identifier);
+  },
+};

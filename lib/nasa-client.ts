@@ -2,6 +2,7 @@ import "server-only";
 import { NASA_APOD_BASE_URL, NASA_FETCH_TIMEOUT_MS } from "@/config/constants";
 import { nasaApodResponseSchema } from "@/schemas/apod";
 import type { Apod } from "@/schemas/apod";
+import { getMockApod } from "@/lib/apod-fixtures";
 
 // Only these hosts are ever allowed as a video embed src — closes off any
 // dangerouslySetInnerHTML-style XSS risk from an unexpected upstream URL.
@@ -40,6 +41,12 @@ function isAllowedEmbedUrl(url: string): boolean {
 // `date` must already be validated (see lib/date-range.ts) before it reaches here —
 // this function trusts its caller on that point, it does not re-validate.
 export async function fetchApod(date: string, revalidateSeconds: number): Promise<Apod> {
+  // Lets local dev run without a NASA API key or any network call at all —
+  // see lib/apod-fixtures.ts. Never set in production.
+  if (process.env.MOCK_APOD === "true") {
+    return getMockApod(date);
+  }
+
   const apiKey = process.env.NASA_API_KEY;
   if (!apiKey) {
     throw new ApodUpstreamError("NASA_API_KEY is not configured");
