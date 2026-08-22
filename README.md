@@ -61,7 +61,7 @@ node --env-file=.env.local scripts/verify-shared-rate-limit.mjs
 ### Prerequisites
 
 - Node.js 20+
-- A free [NASA API key](https://api.nasa.gov/) (the `DEMO_KEY` works too, but is rate-limited)
+- A free [NASA API key](https://api.nasa.gov/) (the `DEMO_KEY` works too, but is rate-limited) — only needed if you're not using mock mode (see below)
 
 ### Setup
 
@@ -75,6 +75,8 @@ Create a `.env.local` file in the project root:
 NASA_API_KEY=your_key_here
 ```
 
+`UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` are optional — without them, rate limiting just logs a warning and bypasses instead of failing (see [Rate limiting](#rate-limiting)).
+
 Then run the dev server:
 
 ```bash
@@ -83,10 +85,22 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+### Mock mode
+
+To work on the UI without a NASA API key, Upstash credentials, or any network call at all:
+
+```bash
+npm run dev:mock
+```
+
+This sets `MOCK_APOD=true`, which makes `lib/nasa-client.ts` return deterministic fixture data from `lib/apod-fixtures.ts` (covering both the image and video code paths) instead of calling NASA. Useful for UI work — like the cursor/background effects — where the actual picture doesn't matter and you don't want to burn NASA's rate-limited quota.
+
 ### Other scripts
 
 ```bash
-npm run build   # production build
-npm run start   # run the production build
-npm run lint     # eslint
+npm run build       # production build
+npm run start        # run the production build
+npm run lint          # eslint
+npm run test           # run the test suite once
+npm run test:watch      # run tests in watch mode
 ```
