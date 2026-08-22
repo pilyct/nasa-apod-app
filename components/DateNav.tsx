@@ -27,6 +27,13 @@ export function DateNav({ date }: { date: string }) {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      const isFormField =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable;
+      if (isFormField) return;
+
       if (e.key === "ArrowLeft" && canGoPrev) goTo(prevDate);
       if (e.key === "ArrowRight" && canGoNext) goTo(nextDate);
     }
