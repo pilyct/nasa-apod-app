@@ -73,6 +73,8 @@ export function MediaFrame({ apod }: { apod: Apod }) {
   }
 
   // §10: fall back to url silently; if both absent, show a text-only card, never a broken-image icon.
+  // (Scheme safety for these URLs is enforced upstream in lib/nasa-client.ts,
+  // the trust boundary where NASA's raw response is first parsed.)
   const src = apod.imageUrl ?? apod.hdImageUrl;
   if (!src) {
     return (
@@ -116,7 +118,7 @@ export function MediaFrame({ apod }: { apod: Apod }) {
           loaded ? "opacity-100" : "opacity-0"
         }`}
       />
-      {apod.hdImageUrl && (
+      {apod.hdImageUrl && apod.hdImageUrl !== apod.imageUrl && (
         <a
           href={apod.hdImageUrl}
           target="_blank"

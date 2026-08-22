@@ -7,21 +7,36 @@ import type { Apod } from "@/types/apod";
 // duplicated this rate-limit-gate + fetch + swallow-catch block almost
 // verbatim — any future change to the gating logic had to be made
 // correctly in two places.
-//
-// Returns undefined (rather than throwing) whenever SSR shouldn't render
-// data directly: either the visitor is rate limited, or the NASA fetch
-// failed. In both cases Hero's client-side useApod hook takes over via
-// /api/apod, which applies the same rate limit and surfaces a proper error
-// state, instead of crashing the page render.
+export interface FetchApodGuardedResult {
+  data?: Apod;
+  // Actual time this data was fetched, so useApod's initialDataUpdatedAt
+  // can anchor freshness correctly instead of to whenever the client hook
+  // happens to mount.
+  fetchedAt?: number;
+  // Lets the caller distinguish "SSR was rate limited" from "SSR fetch
+  // failed" — without this, both collapsed into the same undefined data,
+  // so a rate-limited visitor's page would immediately fire a client-side
+  // refetch through /api/apod that's very likely to hit the same 429 again.
+  rateLimited: boolean;
+}
+
 export async function fetchApodGuarded(
   date: string,
   revalidateSeconds: number,
-): Promise<Apod | undefined> {
-  if (await isApodRateLimited()) return undefined;
+): Promise<FetchApodGuardedResult> {
+  if (await isApodRateLimited()) {
+    return { rateLimited: true };
+  }
 
   try {
-    return await fetchApod(date, revalidateSeconds);
-  } catch {
-    return undefined;
+    const data = await fetchApod(date, revalidateSeconds);
+    return { data, fetchedAt: Date.now(), rateLimited: false };
+  } catch (error) {
+    // Unlike app/api/apod/route.ts's equivalent catch block, this path used
+    // to swallow the error with no trace at all — a genuine NASA outage or
+    // upstream schema change during SSR/ISR revalidation would've been
+    // invisible in server logs.
+    console.error("SSR APOD fetch failed:", error);
+    return { rateLimited: false };
   }
 }

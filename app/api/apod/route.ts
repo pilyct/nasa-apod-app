@@ -11,7 +11,13 @@ import {
 } from "@/lib/nasa-client";
 
 export async function GET(request: NextRequest) {
-  const requestedDate = request.nextUrl.searchParams.get("date") ?? todayIsoDate();
+  // Computed once and reused below (for isToday) rather than calling
+  // todayIsoDate() again after the awaited rate-limit check — otherwise a
+  // request straddling a UTC-midnight rollover could get today's date here
+  // but be classified as "not today" later, caching it as immutable for a
+  // year instead of the short today-tier window.
+  const today = todayIsoDate();
+  const requestedDate = request.nextUrl.searchParams.get("date") ?? today;
   const date = validateApodDate(requestedDate);
 
   if (!date) {
@@ -39,7 +45,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const today = todayIsoDate();
   const isToday = date === today;
   const revalidateSeconds = getRevalidateSeconds(date, today);
 
@@ -58,7 +63,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No picture published for this date" }, { status: 404 });
     }
     if (error instanceof ApodRateLimitedError) {
-      return NextResponse.json({ error: "High demand right now — try again shortly" }, { status: 429 });
+      // Forward NASA's own Retry-After when they send one, so useApod's
+      // retryDelay can honor it instead of falling back to a blind
+      // exponential guess. NASA doesn't always include it, so default to a
+      // conservative 60s — still better than an unbounded client fallback.
+      const retryAfterSeconds = error.retryAfterSeconds ?? 60;
+      return NextResponse.json(
+        { error: "High demand right now — try again shortly" },
+        { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } },
+      );
     }
     if (error instanceof ApodUpstreamError) {
       console.error("APOD upstream error:", error.message);

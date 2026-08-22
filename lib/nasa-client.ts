@@ -26,12 +26,32 @@ function isAllowedVideoFileUrl(url: string): boolean {
 }
 
 export class ApodNotFoundError extends Error {}
-export class ApodRateLimitedError extends Error {}
+export class ApodRateLimitedError extends Error {
+  constructor(message: string, public retryAfterSeconds?: number) {
+    super(message);
+  }
+}
 export class ApodUpstreamError extends Error {}
 
 function isAllowedEmbedUrl(url: string): boolean {
   try {
     return ALLOWED_EMBED_HOSTS.includes(new URL(url).host);
+  } catch {
+    return false;
+  }
+}
+
+// schemas/apod.ts validates image URLs with plain z.string().url(), which
+// accepts any scheme (including javascript:) as syntactically valid. Applied
+// here — the one place NASA's raw response is first parsed — rather than at
+// each UI call site, so every current and future consumer of apod.imageUrl/
+// hdImageUrl is protected automatically instead of needing to remember to
+// re-check. (Video URLs get the equivalent protection via the host
+// allowlists above, which implicitly require an http(s)-shaped authority.)
+function isSafeHttpUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
   } catch {
     return false;
   }
@@ -72,7 +92,11 @@ export async function fetchApod(date: string, revalidateSeconds: number): Promis
   }
 
   if (res.status === 404) throw new ApodNotFoundError(`No APOD for date ${date}`);
-  if (res.status === 429) throw new ApodRateLimitedError("NASA APOD API rate limit hit");
+  if (res.status === 429) {
+    const retryAfterHeader = res.headers.get("Retry-After");
+    const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : undefined;
+    throw new ApodRateLimitedError("NASA APOD API rate limit hit", retryAfterSeconds);
+  }
   if (!res.ok) throw new ApodUpstreamError(`NASA APOD API responded ${res.status}`);
 
   const json = await res.json();
@@ -97,13 +121,17 @@ export async function fetchApod(date: string, revalidateSeconds: number): Promis
     };
   }
 
+  const imageUrl = raw.url && isSafeHttpUrl(raw.url) ? raw.url : undefined;
+  const rawHdUrl = raw.hdurl ?? raw.url;
+  const hdImageUrl = rawHdUrl && isSafeHttpUrl(rawHdUrl) ? rawHdUrl : undefined;
+
   return {
     title: raw.title,
     date: raw.date,
     explanation: raw.explanation,
     mediaType: "image",
-    imageUrl: raw.url,
-    hdImageUrl: raw.hdurl ?? raw.url,
+    imageUrl,
+    hdImageUrl,
     copyright: raw.copyright,
   };
 }

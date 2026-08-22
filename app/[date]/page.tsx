@@ -14,7 +14,14 @@ export default async function DatePage({
   if (!date) notFound();
 
   const revalidateSeconds = getRevalidateSeconds(date, todayIsoDate());
-  const initialData = await fetchApodGuarded(date, revalidateSeconds);
+  const { data, fetchedAt, rateLimited } = await fetchApodGuarded(date, revalidateSeconds);
 
-  return <Hero date={date} initialData={initialData} />;
+  return (
+    <Hero
+      date={date}
+      initialData={data}
+      initialDataUpdatedAt={fetchedAt}
+      rateLimited={rateLimited}
+    />
+  );
 }
