@@ -13,6 +13,10 @@ export function validateApodDate(date: string): string | null {
 
   const parsed = new Date(`${date}T00:00:00Z`);
   if (Number.isNaN(parsed.getTime())) return null;
+  // Date silently rolls calendar-invalid input over (e.g. Feb 30 -> Mar 1)
+  // instead of producing NaN — round-trip through the parsed date to catch
+  // that, since Number.isNaN alone misses it.
+  if (parsed.toISOString().slice(0, 10) !== date) return null;
 
   const today = todayIsoDate();
   if (date < ARCHIVE_START_DATE || date > today) return null;

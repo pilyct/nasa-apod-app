@@ -28,4 +28,14 @@ describe("validateApodDate", () => {
     expect(validateApodDate("")).toBeNull();
     expect(validateApodDate("2024/01/01")).toBeNull();
   });
+
+  it("rejects calendar-invalid dates that Date silently rolls over", () => {
+    expect(validateApodDate("2024-02-30")).toBeNull();
+    expect(validateApodDate("2023-06-31")).toBeNull();
+    expect(validateApodDate("2023-02-29")).toBeNull(); // not a leap year
+  });
+
+  it("accepts a valid leap day", () => {
+    expect(validateApodDate("2024-02-29")).toBe("2024-02-29");
+  });
 });
