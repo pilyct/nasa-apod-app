@@ -15,7 +15,7 @@ const PAST_DATE_REVALIDATE_SECONDS = 60 * 60 * 24 * 365;
 const TODAY_REVALIDATE_SECONDS = 60 * 15;
 
 export async function GET(request: NextRequest) {
-  const ip = getClientIp(request);
+  const ip = getClientIp(request.headers);
   const { success, limit, remaining, reset } = await apodRateLimit.limit(ip);
 
   if (!success) {
