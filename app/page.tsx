@@ -1,24 +1,11 @@
 import { Hero } from "@/components/Hero";
-import { fetchApod } from "@/lib/nasa-client";
+import { fetchApodGuarded } from "@/lib/fetch-apod-guarded";
 import { todayIsoDate } from "@/lib/date-range";
-import { isApodRateLimited } from "@/lib/rate-limit-guard";
 import { TODAY_REVALIDATE_SECONDS } from "@/lib/revalidate";
-import type { Apod } from "@/types/apod";
 
 export default async function TodayPage() {
   const date = todayIsoDate();
-
-  let initialData: Apod | undefined;
-  if (!(await isApodRateLimited())) {
-    try {
-      initialData = await fetchApod(date, TODAY_REVALIDATE_SECONDS);
-    } catch {
-      // Swallow here — Hero's client-side fetch (via useApod) will retry and
-      // surface the proper error state instead of crashing the page render.
-    }
-  }
-  // If rate limited, initialData stays undefined and Hero's client-side
-  // useApod hook takes over via /api/apod, which applies the same limit.
+  const initialData = await fetchApodGuarded(date, TODAY_REVALIDATE_SECONDS);
 
   return <Hero date={date} initialData={initialData} />;
 }

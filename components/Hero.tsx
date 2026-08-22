@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useApod } from "@/hooks/useApod";
+import { useApod, ApodFetchError } from "@/hooks/useApod";
 import { MediaFrame } from "@/components/MediaFrame";
 import { MetadataPanel } from "@/components/MetadataPanel";
 import { DateNav } from "@/components/DateNav";
@@ -60,16 +60,15 @@ export function Hero({
 
       {!isLoading &&
         !data &&
-        error &&
-        "status" in error &&
-        (error as { status: number }).status === 404 && <EmptyCard />}
+        error instanceof ApodFetchError &&
+        error.status === 404 && <EmptyCard />}
 
       {!isLoading &&
         !data &&
         error &&
-        !(
-          "status" in error && (error as { status: number }).status === 404
-        ) && <ErrorCard message={error.message} onRetry={() => refetch()} />}
+        !(error instanceof ApodFetchError && error.status === 404) && (
+          <ErrorCard message={error.message} onRetry={() => refetch()} />
+        )}
 
       {!isLoading && data && (
         <div className="flex flex-col md:flex-row items-center justify-between px-4">
