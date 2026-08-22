@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Tooltip } from "@base-ui/react/tooltip";
 import { ARCHIVE_START_DATE } from "@/config/constants";
 import { todayIsoDate } from "@/lib/date-range";
 
@@ -36,14 +37,27 @@ export function DateNav({ date }: { date: string }) {
 
   return (
     <div className="flex items-center gap-1 md:gap-3">
-      <button
-        aria-label="Previous day"
-        disabled={!canGoPrev}
-        onClick={() => goTo(prevDate)}
-        className="rounded-md md:p-2 text-hero-fg opacity-80 transition-opacity hover:opacity-100 disabled:opacity-30 focus-visible:outline focus-visible:outline-accent"
-      >
-        ←
-      </button>
+      <Tooltip.Root disabled={!canGoPrev}>
+        <Tooltip.Trigger
+          render={
+            <button
+              aria-label="Previous day"
+              disabled={!canGoPrev}
+              onClick={() => goTo(prevDate)}
+              className="cursor-pointer rounded-md md:p-2 text-hero-fg opacity-80 transition-opacity hover:opacity-100 disabled:opacity-30 focus-visible:outline focus-visible:outline-accent"
+            >
+              ←
+            </button>
+          }
+        />
+        <Tooltip.Portal>
+          <Tooltip.Positioner sideOffset={8}>
+            <Tooltip.Popup className="rounded-md border border-hero-fg/10 bg-hero-bg px-2 py-1 text-xs text-hero-fg shadow-md">
+              Previous day
+            </Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>
       <input
         type="date"
         aria-label="Choose a date"
@@ -51,16 +65,29 @@ export function DateNav({ date }: { date: string }) {
         min={ARCHIVE_START_DATE}
         max={today}
         onChange={(e) => e.target.value && goTo(e.target.value)}
-        className="rounded-md bg-transparent md:px-2 py-1 text-sm text-hero-fg scheme-dark focus-visible:outline focus-visible:outline-accent"
+        className="cursor-pointer rounded-md bg-transparent md:px-2 py-1 text-sm text-hero-fg scheme-dark focus-visible:outline focus-visible:outline-accent"
       />
-      <button
-        aria-label="Next day"
-        disabled={!canGoNext}
-        onClick={() => goTo(nextDate)}
-        className="rounded-md md:p-2 text-hero-fg opacity-80 transition-opacity hover:opacity-100 disabled:opacity-30 focus-visible:outline focus-visible:outline-accent"
-      >
-        →
-      </button>
+      <Tooltip.Root disabled={!canGoNext}>
+        <Tooltip.Trigger
+          render={
+            <button
+              aria-label="Next day"
+              disabled={!canGoNext}
+              onClick={() => goTo(nextDate)}
+              className="cursor-pointer rounded-md md:p-2 text-hero-fg opacity-80 transition-opacity hover:opacity-100 disabled:opacity-30 focus-visible:outline focus-visible:outline-accent"
+            >
+              →
+            </button>
+          }
+        />
+        <Tooltip.Portal>
+          <Tooltip.Positioner sideOffset={8}>
+            <Tooltip.Popup className="rounded-md border border-hero-fg/10 bg-hero-bg px-2 py-1 text-xs text-hero-fg shadow-md">
+              Next day
+            </Tooltip.Popup>
+          </Tooltip.Positioner>
+        </Tooltip.Portal>
+      </Tooltip.Root>
     </div>
   );
 }
