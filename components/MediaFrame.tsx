@@ -3,6 +3,11 @@
 import { useState } from "react";
 import type { Apod } from "@/types/apod";
 
+function withCacheBust(url: string, retryCount: number): string {
+  if (retryCount === 0) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}retry=${retryCount}`;
+}
+
 export function MediaFrame({ apod }: { apod: Apod }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -31,7 +36,7 @@ export function MediaFrame({ apod }: { apod: Apod }) {
         <div className="aspect-video w-full bg-hero-bg">
           <video
             key={retryCount}
-            src={apod.videoFileUrl}
+            src={withCacheBust(apod.videoFileUrl, retryCount)}
             controls
             onError={() => setFailed(true)}
             className="h-full w-full object-contain"
@@ -46,6 +51,13 @@ export function MediaFrame({ apod }: { apod: Apod }) {
             src={apod.videoEmbedUrl}
             title={apod.title}
             className="h-full w-full"
+            // NOTE: allow-scripts + allow-same-origin together let embedded
+            // script escape this sandbox in principle — they can't safely be
+            // narrowed further here without breaking the YouTube/Vimeo
+            // player, which needs both. The actual security boundary is
+            // ALLOWED_EMBED_HOSTS in lib/nasa-client.ts, which restricts
+            // videoEmbedUrl to youtube.com/player.vimeo.com — do not widen
+            // that allowlist without re-evaluating this sandbox.
             sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
             allow="encrypted-media; picture-in-picture"
             allowFullScreen
@@ -96,7 +108,7 @@ export function MediaFrame({ apod }: { apod: Apod }) {
       )}
       <img
         key={retryCount}
-        src={retryCount > 0 ? `${src}${src.includes("?") ? "&" : "?"}retry=${retryCount}` : src}
+        src={withCacheBust(src, retryCount)}
         alt={apod.title}
         onLoad={() => setLoaded(true)}
         onError={() => setFailed(true)}
