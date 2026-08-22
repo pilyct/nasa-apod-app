@@ -59,19 +59,21 @@ export function Hero({
       {isLoading && <Skeleton />}
 
       {!isLoading &&
+        !data &&
         error &&
         "status" in error &&
         (error as { status: number }).status === 404 && <EmptyCard />}
 
       {!isLoading &&
+        !data &&
         error &&
         !(
           "status" in error && (error as { status: number }).status === 404
         ) && <ErrorCard message={error.message} onRetry={() => refetch()} />}
 
-      {!isLoading && !error && data && (
+      {!isLoading && data && (
         <div className="flex flex-col md:flex-row items-center justify-between px-4">
-          <MediaFrame apod={data} />
+          <MediaFrame key={date} apod={data} />
           <MetadataPanel apod={data} />
         </div>
       )}
