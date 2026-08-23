@@ -26,7 +26,7 @@ export function Footer() {
         </a>
         . Not affiliated with or endorsed by NASA.
       </p>
-      <p className="mt-1">
+      <p className="mt-1 flex items-center justify-center gap-2">
         © {year}{" "}
         <a
           href="https://github.com/pilyct"
