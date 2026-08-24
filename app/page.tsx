@@ -5,17 +5,7 @@ import { TODAY_REVALIDATE_SECONDS } from "@/lib/revalidate";
 
 export default async function TodayPage() {
   const date = todayIsoDate();
-  const { data, fetchedAt, rateLimited } = await fetchApodGuarded(
-    date,
-    TODAY_REVALIDATE_SECONDS,
-  );
+  const { data, fetchedAt } = await fetchApodGuarded(date, TODAY_REVALIDATE_SECONDS);
 
-  return (
-    <Hero
-      date={date}
-      initialData={data}
-      initialDataUpdatedAt={fetchedAt}
-      rateLimited={rateLimited}
-    />
-  );
+  return <Hero date={date} initialData={data} initialDataUpdatedAt={fetchedAt} />;
 }

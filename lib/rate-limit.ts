@@ -65,8 +65,8 @@ export const apodRateLimit = {
     } catch (error) {
       // A genuine Redis/network error (not the library's own internal
       // timeout, which already fails open) shouldn't crash every caller —
-      // fail open here once, so app/api/apod/route.ts and
-      // lib/rate-limit-guard.ts don't each need their own try/catch.
+      // fail open here once, so app/api/apod/route.ts doesn't need its own
+      // try/catch.
       console.error("[rate-limit] check failed, allowing request:", error);
       return { success: true, limit: MAX_REQUESTS, remaining: MAX_REQUESTS, reset: Date.now() };
     }
