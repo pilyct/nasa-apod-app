@@ -110,6 +110,13 @@ export function MediaFrame({ apod }: { apod: Apod }) {
       )}
       <img
         key={retryCount}
+        ref={(img) => {
+          // A cached image can finish loading before/at hydration, firing
+          // its `load` event before React attaches onLoad below — without
+          // this, `loaded` would never flip true and the image would stay
+          // invisible after a refresh.
+          if (img?.complete) setLoaded(true);
+        }}
         src={withCacheBust(src, retryCount)}
         alt={apod.title}
         onLoad={() => setLoaded(true)}
