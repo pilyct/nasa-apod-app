@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { Apod } from "@/types/apod";
 
 function withCacheBust(url: string, retryCount: number): string {
@@ -12,6 +12,13 @@ export function MediaFrame({ apod }: { apod: Apod }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+
+  // Stable identity so React doesn't detach/reattach this ref (re-running
+  // the img.complete check) on every re-render — only when the underlying
+  // <img> node itself changes (new retryCount -> new key).
+  const checkAlreadyLoaded = useCallback((img: HTMLImageElement | null) => {
+    if (img?.complete) setLoaded(true);
+  }, []);
 
   if (apod.mediaType === "video") {
     if (apod.videoFileUrl) {
@@ -110,13 +117,7 @@ export function MediaFrame({ apod }: { apod: Apod }) {
       )}
       <img
         key={retryCount}
-        ref={(img) => {
-          // A cached image can finish loading before/at hydration, firing
-          // its `load` event before React attaches onLoad below — without
-          // this, `loaded` would never flip true and the image would stay
-          // invisible after a refresh.
-          if (img?.complete) setLoaded(true);
-        }}
+        ref={checkAlreadyLoaded}
         src={withCacheBust(src, retryCount)}
         alt={apod.title}
         onLoad={() => setLoaded(true)}
