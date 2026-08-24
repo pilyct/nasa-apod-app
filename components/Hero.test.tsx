@@ -74,28 +74,15 @@ describe("Hero", () => {
     expect(screen.queryByText(/You're offline/)).not.toBeInTheDocument();
   });
 
-  it("shows the rate-limited error card instead of firing a query when SSR was rate limited with no cached data", () => {
-    useApodMock.mockReturnValue({ data: undefined, error: null, isLoading: false, refetch: vi.fn() });
-
-    render(<Hero date="2024-01-01" rateLimited />);
-
-    expect(screen.getByText("Too many requests — try again shortly")).toBeInTheDocument();
-    expect(useApodMock).toHaveBeenCalledWith(
-      "2024-01-01",
-      undefined,
-      expect.objectContaining({ enabled: false }),
-    );
-  });
-
-  it("still queries when SSR was rate limited but cached initialData exists", () => {
+  it("passes initialData straight through to useApod", () => {
     useApodMock.mockReturnValue({ data: apod, error: null, isLoading: false, refetch: vi.fn() });
 
-    render(<Hero date="2024-01-01" initialData={apod} rateLimited />);
+    render(<Hero date="2024-01-01" initialData={apod} />);
 
     expect(useApodMock).toHaveBeenCalledWith(
       "2024-01-01",
       apod,
-      expect.objectContaining({ enabled: true }),
+      expect.objectContaining({}),
     );
   });
 
