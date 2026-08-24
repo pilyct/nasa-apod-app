@@ -32,7 +32,7 @@ async function fetchApodByDate(date: string): Promise<Apod> {
 export function useApod(
   date: string,
   initialData?: Apod,
-  options?: { initialDataUpdatedAt?: number; enabled?: boolean },
+  options?: { initialDataUpdatedAt?: number },
 ) {
   const isToday = date === todayIsoDate();
 
@@ -46,7 +46,6 @@ export function useApod(
     // which (stacked on top of however old the SSR fetch cache already was)
     // can roughly double the effective staleness window before a refetch.
     initialDataUpdatedAt: options?.initialDataUpdatedAt,
-    enabled: options?.enabled,
     // Override QueryProvider's global 1hr staleTime for today's date — the
     // server only guarantees that entry is fresh for TODAY_REVALIDATE_SECONDS
     // (15 min; it can still be corrected or posted late), so a tab left open
