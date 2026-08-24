@@ -24,6 +24,25 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  images: {
+    // NASA's `url`/`hdurl` fields are only scheme-checked (see
+    // isSafeHttpUrl in lib/nasa-client.ts), not host-restricted like video
+    // embeds are — historically APOD images can come from more than one
+    // NASA-controlled host, so a narrow allowlist here risks silently
+    // breaking real images. This keeps next/image's optimization benefits
+    // (resizing, lazy loading, responsive srcset) without narrowing what
+    // was already an intentionally permissive boundary.
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
+    // Needed for the local mock-mode placeholder (public/mock-image.svg) —
+    // safe because it's our own bundled asset, never NASA/user-supplied
+    // input. Next disables SVG optimization by default since an
+    // attacker-supplied SVG can carry a <script>; contentSecurityPolicy
+    // below is Next's own recommended mitigation for the rare case where
+    // this ever applied to an untrusted source.
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
   async headers() {
     return [
       {

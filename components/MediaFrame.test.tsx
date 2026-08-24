@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { MediaFrame } from "@/components/MediaFrame";
 import type { Apod } from "@/types/apod";
 
@@ -33,7 +33,7 @@ describe("MediaFrame", () => {
     expect(img.className).toContain("opacity-100");
   });
 
-  it("stays hidden until onLoad fires for a non-cached image", () => {
+  it("stays hidden until onLoad fires for a non-cached image", async () => {
     Object.defineProperty(window.HTMLImageElement.prototype, "complete", {
       configurable: true,
       get: () => false,
@@ -44,7 +44,10 @@ describe("MediaFrame", () => {
     expect(img.className).toContain("opacity-0");
 
     fireEvent.load(img);
-    expect(img.className).toContain("opacity-100");
+    // next/image's onLoad wrapper resolves via img.decode() (a microtask),
+    // not synchronously off the native load event — see
+    // node_modules/next/dist/client/image-component.js's handleLoading.
+    await waitFor(() => expect(img.className).toContain("opacity-100"));
   });
 
   it("shows a retry button after the image errors, and resets on retry", () => {

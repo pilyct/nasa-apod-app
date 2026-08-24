@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import Image from "next/image";
 import { useApod, ApodFetchError } from "@/hooks/useApod";
 import { MediaFrame } from "@/components/MediaFrame";
 import { MetadataPanel } from "@/components/MetadataPanel";
@@ -51,7 +52,7 @@ export function Hero({
             <span className="font-sans text-2xl md:text-3xl font-semibold tracking-wide text-hero-fg">
               C
             </span>
-            <img src="/icon.png" alt="" className="h-6 md:w-6" />
+            <Image src="/icon.png" alt="" width={32} height={32} className="h-6 md:w-6" />
 
             <span className="font-sans text-2xl md:text-3xl font-semibold tracking-wide text-hero-fg">
               smica

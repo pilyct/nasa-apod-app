@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Image from "next/image";
 import type { Apod } from "@/types/apod";
 
 function withCacheBust(url: string, retryCount: number): string {
@@ -115,14 +116,17 @@ export function MediaFrame({ apod }: { apod: Apod }) {
       {!loaded && (
         <div className="absolute inset-0 animate-pulse bg-white/10" />
       )}
-      <img
+      <Image
         key={retryCount}
         ref={checkAlreadyLoaded}
         src={withCacheBust(src, retryCount)}
         alt={apod.title}
+        fill
+        sizes="(min-width: 768px) 50vw, 100vw"
+        priority
         onLoad={() => setLoaded(true)}
         onError={() => setFailed(true)}
-        className={`h-full w-full object-cover transition-opacity duration-200 ${
+        className={`object-cover transition-opacity duration-200 ${
           loaded ? "opacity-100" : "opacity-0"
         }`}
       />
