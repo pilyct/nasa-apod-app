@@ -62,7 +62,7 @@ export function Hero({
     <div>
       {isOffline && <OfflineBanner />}
 
-      <div className="flex flex-col gap-2 md:flex-row items-center justify-between px-4 py-3">
+      <div className="relative z-50 flex flex-col gap-2 md:flex-row items-center justify-between px-4 py-3">
         <div className="flex flex-col items-center md:items-start justify-between">
           <div className="flex items-center">
             <span className="font-sans text-2xl md:text-3xl font-semibold tracking-wide text-hero-fg">

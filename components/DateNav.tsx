@@ -58,8 +58,8 @@ export function DateNav({ date }: { date: string }) {
           }
         />
         <Tooltip.Portal>
-          <Tooltip.Positioner sideOffset={8}>
-            <Tooltip.Popup className="rounded-md border border-hero-fg/10 bg-hero-bg px-2 py-1 text-xs text-hero-fg shadow-md">
+          <Tooltip.Positioner sideOffset={8} className="z-50">
+            <Tooltip.Popup className="z-50 rounded-md border border-hero-fg/10 bg-hero-bg px-2 py-1 text-xs text-hero-fg shadow-md">
               Previous day
             </Tooltip.Popup>
           </Tooltip.Positioner>
@@ -88,8 +88,8 @@ export function DateNav({ date }: { date: string }) {
           }
         />
         <Tooltip.Portal>
-          <Tooltip.Positioner sideOffset={8}>
-            <Tooltip.Popup className="rounded-md border border-hero-fg/10 bg-hero-bg px-2 py-1 text-xs text-hero-fg shadow-md">
+          <Tooltip.Positioner sideOffset={8} className="z-50">
+            <Tooltip.Popup className="z-50 rounded-md border border-hero-fg/10 bg-hero-bg px-2 py-1 text-xs text-hero-fg shadow-md">
               Next day
             </Tooltip.Popup>
           </Tooltip.Positioner>
