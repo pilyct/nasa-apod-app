@@ -71,7 +71,7 @@ class Line {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    let node = this.nodes[0];
+    const node = this.nodes[0];
     let x = node.x;
     let y = node.y;
     ctx.beginPath();

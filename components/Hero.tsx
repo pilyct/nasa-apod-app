@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useApod, ApodFetchError } from "@/hooks/useApod";
 import { MediaFrame } from "@/components/MediaFrame";
 import { MetadataPanel } from "@/components/MetadataPanel";
@@ -44,19 +44,23 @@ export function Hero({
     initialDataUpdatedAt,
     enabled,
   });
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    setIsOffline(!navigator.onLine);
-    const goOnline = () => setIsOffline(false);
-    const goOffline = () => setIsOffline(true);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
+  // useSyncExternalStore (not useState+useEffect) subscribes to
+  // navigator.onLine without ever calling setState from an effect body, and
+  // its getServerSnapshot avoids a hydration mismatch for a client that
+  // happens to be offline on first load (an effect-based setState would
+  // correct that a tick after SSR renders online).
+  const isOffline = useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener("online", onChange);
+      window.addEventListener("offline", onChange);
+      return () => {
+        window.removeEventListener("online", onChange);
+        window.removeEventListener("offline", onChange);
+      };
+    },
+    () => !navigator.onLine,
+    () => false,
+  );
 
   return (
     <div>
