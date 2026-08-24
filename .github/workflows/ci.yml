@@ -21,6 +21,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Generate route types
+        # tsconfig.json includes .next/types/**/*.ts for Next's typed-routes
+        # feature (e.g. the LayoutProps global in app/layout.tsx) — those
+        # files only exist after a build or this, so tsc would otherwise
+        # fail on a clean checkout with no prior local build.
+        run: npx next typegen
+
       - name: Type check
         run: npx tsc --noEmit
 
