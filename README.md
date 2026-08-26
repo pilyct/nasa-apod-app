@@ -9,12 +9,14 @@ A calm, editorial reader for [NASA's Astronomy Picture of the Day](https://apod.
 
 ## Features
 
-- **Today's picture, front and center** — the home page server-renders the current day's APOD (image or video) with its title, explanation, and copyright.
+- **Today's picture, front and center** — the home page renders the current day's APOD (image or video) with its title, explanation, and copyright.
 - **Full archive browsing** — navigate any date back to the archive's start (1995-06-16) via `/[date]`, either through the prev/next arrows, the date picker, or arrow-key navigation.
 - **Image and video support** — images render full-bleed with a link to the HD version; videos render as a YouTube/Vimeo embed or a native `<video>` tag when NASA self-hosts the file, with a strict host allowlist so no unexpected embed source ever gets injected.
 - **Graceful degradation** — dedicated states for loading (skeleton), no APOD published for a date (empty state), upstream/network failures (retryable error card), and an offline banner that reacts live to the browser's connection status.
-- **Smart caching** — today's entry revalidates every 15 minutes (it can still be corrected or published late); past dates are cached for a year since they're immutable once published.
-- **Animated canvas cursor** — a subtle particle-trail cursor effect follows the pointer, tying the whole page together visually.
+- **Smart caching** — today's entry revalidates every 15 minutes (it can still be corrected or published late); past dates are cached for a year since they're immutable once published. The home page is fully static; archive pages are rendered on first visit and cached per date afterward.
+- **Optimized media** — images go through `next/image` (responsive `srcset`, lazy loading, automatic resizing) instead of a plain `<img>`.
+- **Animated canvas cursor + starfield background** — a subtle particle-trail cursor effect and a slowly-drifting parallax starfield tie the whole page together visually, both pausing automatically when the tab isn't visible.
+- **Locked-down by default** — a strict Content-Security-Policy and other security headers (`X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) are set on every response (`next.config.ts`).
 
 ## Tech stack
 
@@ -23,30 +25,37 @@ A calm, editorial reader for [NASA's Astronomy Picture of the Day](https://apod.
 - [@base-ui/react](https://base-ui.com) for accessible, unstyled primitives (tooltips, etc.)
 - [TanStack Query](https://tanstack.com/query) for client-side data fetching, caching, and retries
 - [Zod](https://zod.dev) for runtime validation of NASA's API response, decoupling the app's own data shape from upstream changes
+- [Vitest](https://vitest.dev) + [React Testing Library](https://testing-library.com/react) for unit and component tests
 
 ## Architecture
 
 ```
 app/
-  page.tsx            Today's APOD (server component)
-  [date]/page.tsx      Archive route for any past date
-  api/apod/route.ts    Internal API route — the only place the browser talks to
+  page.tsx                Today's APOD (statically prerendered)
+  [date]/page.tsx         Archive route for any past date (rendered on
+                          first visit, then cached per date)
+  api/apod/route.ts       Internal API route — the only place the browser talks to
+  layout.tsx              Root layout: fonts, background/cursor effects, security headers
 components/
-  Hero.tsx             Page shell: header, date nav, loading/error/data states
-  MediaFrame.tsx       Renders the image or video
-  MetadataPanel.tsx    Title, date, explanation, copyright
-  DateNav.tsx          Prev/next + date-picker navigation
-  states/              Skeleton, ErrorCard, EmptyCard, OfflineBanner
+  Hero.tsx                Page shell: header, date nav, loading/error/data states
+  MediaFrame.tsx          Renders the image or video (next/image under the hood)
+  MetadataPanel.tsx       Title, date, explanation, copyright
+  DateNav.tsx             Prev/next + date-picker navigation
+  states/                 Skeleton, ErrorCard, EmptyCard, OfflineBanner
 hooks/
-  useApod.ts           TanStack Query hook consumed by Hero
+  useApod.ts              TanStack Query hook consumed by Hero
 lib/
-  nasa-client.ts       Server-only: the one function that calls api.nasa.gov
-  date-range.ts        Date validation shared by the route and the pages
+  nasa-client.ts          Server-only: the one function that calls api.nasa.gov
+  fetch-apod-guarded.ts   Shared SSR fetch + error-swallow logic for the two pages above
+  date-range.ts           Date validation shared by the route and the pages
+  rate-limit.ts           Upstash-backed sliding-window limiter used by the API route
 schemas/
-  apod.ts              Zod schemas for NASA's raw response and our reshaped one
+  apod.ts                 Zod schemas for NASA's raw response and our reshaped one
 ```
 
 The browser never talks to NASA directly — `app/api/apod/route.ts` is the sole proxy, and `lib/nasa-client.ts` is the only module that reads the API key or calls `api.nasa.gov`. This keeps the key server-side and gives the app one place to normalize errors, caching, and NASA's response shape.
+
+Server-rendered pages (`app/page.tsx`, `app/[date]/page.tsx`) call `fetchApod` directly rather than going through `/api/apod` — they're not IP-rate-limited themselves, since NASA's own quota is already protected by Next's fetch cache deduping identical-date requests within the revalidate window. Only the client-facing `/api/apod` route (used by `useApod` for refetches) enforces the per-IP limit below.
 
 ## Rate limiting
 
@@ -93,14 +102,25 @@ To work on the UI without a NASA API key, Upstash credentials, or any network ca
 npm run dev:mock
 ```
 
-This sets `MOCK_APOD=true`, which makes `lib/nasa-client.ts` return deterministic fixture data from `lib/apod-fixtures.ts` (covering both the image and video code paths) instead of calling NASA. Useful for UI work — like the cursor/background effects — where the actual picture doesn't matter and you don't want to burn NASA's rate-limited quota.
+This sets `MOCK_APOD=true`, which makes `lib/nasa-client.ts` return deterministic fixture data from `lib/apod-fixtures.ts` (covering both the image and video code paths, using a small local SVG placeholder instead of a real photo) instead of calling NASA. Useful for UI work — like the cursor/background effects — where the actual picture doesn't matter and you don't want to burn NASA's rate-limited quota.
+
+### Testing
+
+```bash
+npm run test        # run the full suite once (vitest)
+npm run test:watch  # watch mode
+```
+
+Covers date validation edge cases, the URL/host sanitization that's the app's main XSS boundary (`lib/nasa-client.ts`), client-IP resolution, the API route's status-code branching, and UI state (loading/error/offline) via React Testing Library.
+
+### CI
+
+Every push to `main` and every pull request runs lint, a type check, the test suite, and a production build (`.github/workflows/ci.yml`). The build step sets `MOCK_APOD=true` since the home page is statically prerendered and would otherwise need live NASA API access during the build.
 
 ### Other scripts
 
 ```bash
-npm run build       # production build
-npm run start        # run the production build
-npm run lint          # eslint
-npm run test           # run the test suite once
-npm run test:watch      # run tests in watch mode
+npm run build   # production build
+npm run start   # run the production build
+npm run lint    # eslint
 ```
