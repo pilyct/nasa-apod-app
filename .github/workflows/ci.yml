@@ -37,7 +37,7 @@ jobs:
       - name: Build
         # MOCK_APOD avoids a real network call to NASA during build — `/` is
         # statically prerendered (see app/page.tsx), so without this the
-        # build would depend on NASA_API_KEY and NASA's API being reachable
+        # build would depend on NASA's API being reachable
         # from the CI runner.
         run: npm run build
         env:
