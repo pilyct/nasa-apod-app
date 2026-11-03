@@ -15,7 +15,7 @@ export function MetadataPanel({ apod }: { apod: Apod }) {
       <h1 className="text-2xl font-semibold text-hero-fg">{apod.title}</h1>
       <p className="mt-1 text-sm text-muted opacity-70">
         {formatDate(apod.date)}
-        {apod.copyright && <> · © {apod.copyright}</>}
+        {apod.copyright && <> · Credit: {apod.copyright}</>}
       </p>
       <p className="mt-6 font-serif text-lg leading-relaxed text-hero-fg">
         {apod.explanation}
