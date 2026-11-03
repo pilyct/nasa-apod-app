@@ -17,12 +17,12 @@ export function Footer() {
       <p>
         Imagery and data courtesy of{" "}
         <a
-          href="https://api.nasa.gov/"
+          href="https://science.nasa.gov/apod/"
           target="_blank"
           rel="noopener noreferrer"
           className="text-accent underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-accent"
         >
-          NASA&apos;s Astronomy Picture of the Day API
+          NASA&apos;s Astronomy Picture of the Day
         </a>
         . Not affiliated with or endorsed by NASA.
       </p>

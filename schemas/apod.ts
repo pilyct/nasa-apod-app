@@ -1,16 +1,21 @@
 import { z } from "zod";
 
-// Mirrors NASA's raw response shape. Every field NASA might omit is optional here —
-// we decide how to degrade (fallback / omit) in nasa-client.ts, not in the UI.
+// Mirrors the raw response of NASA's APOD API
+// (science.nasa.gov/wp-json/wp/v2/apod-basic/YYMMDD). Every field NASA might
+// omit is optional here — we decide how to degrade (fallback / omit) in
+// nasa-client.ts, not in the UI. Text fields contain HTML, and the URL fields
+// are plain strings because the HTML can hold protocol-relative URLs; both
+// are cleaned and checked in nasa-client.ts.
 export const nasaApodResponseSchema = z.object({
   title: z.string(),
   date: z.string(),
   explanation: z.string(),
-  url: z.string().url().optional(),
-  hdurl: z.string().url().optional(),
-  media_type: z.enum(["image", "video"]),
+  media_type: z.string().transform((type) => (type === "video" ? "video" : "image")),
+  url: z.string().optional(),
+  hdurl: z.string().optional(),
+  credit: z.string().optional(),
   copyright: z.string().optional(),
-  service_version: z.string().optional(),
+  basic_html: z.string().optional(),
 });
 
 export type NasaApodResponse = z.infer<typeof nasaApodResponseSchema>;

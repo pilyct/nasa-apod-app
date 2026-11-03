@@ -2,8 +2,7 @@ import "server-only";
 import type { Apod } from "@/types/apod";
 
 // Static fixtures used when MOCK_APOD=true, so local development can exercise
-// the full UI (image + video code paths) without hitting api.nasa.gov or
-// consuming its rate-limited quota.
+// the full UI (image + video code paths) without any call to NASA.
 const FIXTURES: Array<Omit<Apod, "date">> = [
   {
     title: "Mock: Whirlpool Galaxy",

@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
 
-// Video embeds are restricted server-side to these two hosts (see
+// Video embeds are restricted server-side to these hosts (see
 // ALLOWED_EMBED_HOSTS in lib/nasa-client.ts) — mirrored here in frame-src so
 // the CSP itself enforces the same boundary the app already relies on,
 // rather than trusting app code alone to never widen the allowlist.
 const EMBED_HOSTS = "https://www.youtube.com https://player.vimeo.com";
+const VIDEO_FILE_HOSTS = "https://assets.science.nasa.gov https://apod.nasa.gov";
 
 // Next dev mode needs 'unsafe-eval' (React's dev-mode stack-remapping) and a
 // ws: connect-src (HMR's websocket) — neither is present in a production
@@ -17,6 +18,9 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   `frame-src 'self' ${EMBED_HOSTS}`,
+  // NASA-hosted video files (see ALLOWED_VIDEO_FILE_HOSTS in
+  // lib/nasa-client.ts). Without this, default-src blocked them entirely.
+  `media-src 'self' ${VIDEO_FILE_HOSTS}`,
   `connect-src 'self'${isDev ? " ws:" : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
@@ -25,7 +29,7 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   images: {
-    // NASA's `url`/`hdurl` fields are only scheme-checked (see
+    // NASA's image URLs are only scheme-checked (see
     // isSafeHttpUrl in lib/nasa-client.ts), not host-restricted like video
     // embeds are — historically APOD images can come from more than one
     // NASA-controlled host, so a narrow allowlist here risks silently
