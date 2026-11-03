@@ -1,5 +1,5 @@
 export function ErrorCard({
-  message = "Couldn't load today's picture. Try again.",
+  message = "Couldn't load this picture. Try again.",
   onRetry,
 }: {
   message?: string;

@@ -11,11 +11,11 @@ import {
 } from "@/lib/nasa-client";
 
 export async function GET(request: NextRequest) {
-  // Computed once and reused below (for isToday) rather than calling
+  // Computed once and reused below (for the cache tier) rather than calling
   // todayIsoDate() again after the awaited rate-limit check — otherwise a
   // request straddling a UTC-midnight rollover could get today's date here
-  // but be classified as "not today" later, caching it as immutable for a
-  // year instead of the short today-tier window.
+  // but be classified as "not today" later, caching it for the long past-date
+  // window instead of the short today-tier one.
   const today = todayIsoDate();
   const requestedDate = request.nextUrl.searchParams.get("date") ?? today;
   const date = validateApodDate(requestedDate);
@@ -45,7 +45,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const isToday = date === today;
   const revalidateSeconds = getRevalidateSeconds(date, today);
 
   try {
@@ -53,9 +52,10 @@ export async function GET(request: NextRequest) {
     // Reuse the already-computed revalidateSeconds rather than re-deriving
     // from the constants — if getRevalidateSeconds() ever grows a third
     // tier, this stays correct automatically instead of silently drifting.
-    const cacheControl = isToday
-      ? `public, s-maxage=${revalidateSeconds}, stale-while-revalidate=${revalidateSeconds * 4}`
-      : `public, max-age=${revalidateSeconds}, immutable`;
+    // Cached at the CDN only (s-maxage), never as "immutable" in the
+    // browser: a bad upstream response can then be fixed with a CDN purge
+    // instead of living on in visitors' browser caches.
+    const cacheControl = `public, s-maxage=${revalidateSeconds}, stale-while-revalidate=${revalidateSeconds * 4}`;
 
     return NextResponse.json(apod, { headers: { "Cache-Control": cacheControl } });
   } catch (error) {
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     }
     if (error instanceof ApodUpstreamError) {
       console.error("APOD upstream error:", error.message);
-      return NextResponse.json({ error: "Couldn't load today's picture. Try again." }, { status: 502 });
+      return NextResponse.json({ error: "Couldn't load this picture. Try again." }, { status: 502 });
     }
     console.error("Unexpected APOD error:", error);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });

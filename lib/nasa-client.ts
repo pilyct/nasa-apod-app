@@ -57,6 +57,26 @@ function isSafeHttpUrl(url: string): boolean {
   }
 }
 
+// Since APOD moved to science.nasa.gov, api.nasa.gov has been answering
+// with well-formed placeholder data instead of the real entry: the title
+// "NASA Science" and the site's logo as the image. It passes the Zod schema,
+// so without this check it would be shown and cached as if it were genuine.
+// Treated as an upstream error so it is never cached and the UI offers Retry.
+const PLACEHOLDER_TITLE = "NASA Science";
+const PLACEHOLDER_IMAGE_PATTERN = /\/nasa-logo[^/]*\.(png|svg|jpe?g)$/i;
+
+function isPlaceholderResponse(raw: { title: string; url?: string; hdurl?: string }): boolean {
+  if (raw.title.trim() === PLACEHOLDER_TITLE) return true;
+  return [raw.url, raw.hdurl].some((u) => {
+    if (!u) return false;
+    try {
+      return PLACEHOLDER_IMAGE_PATTERN.test(new URL(u).pathname);
+    } catch {
+      return false;
+    }
+  });
+}
+
 // The ONLY function in this codebase that reads NASA_API_KEY or calls api.nasa.gov.
 // `date` must already be validated (see lib/date-range.ts) before it reaches here —
 // this function trusts its caller on that point, it does not re-validate.
@@ -106,6 +126,10 @@ export async function fetchApod(date: string, revalidateSeconds: number): Promis
   }
 
   const raw = parsed.data;
+
+  if (isPlaceholderResponse(raw)) {
+    throw new ApodUpstreamError(`NASA APOD API returned placeholder data for ${date}`);
+  }
 
   if (raw.media_type === "video") {
     const embedUrl = raw.url && isAllowedEmbedUrl(raw.url) ? raw.url : undefined;

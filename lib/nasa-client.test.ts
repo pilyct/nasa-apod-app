@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { fetchApod } from "@/lib/nasa-client";
+import { fetchApod, ApodUpstreamError } from "@/lib/nasa-client";
 
 describe("fetchApod (MOCK_APOD=true)", () => {
   afterEach(() => {
@@ -130,5 +130,81 @@ describe("fetchApod URL/host sanitization (real network path)", () => {
 
     expect(apod.videoFileUrl).toBeUndefined();
     expect(apod.videoEmbedUrl).toBeUndefined();
+  });
+});
+
+// Since APOD moved to science.nasa.gov, api.nasa.gov has returned
+// schema-valid placeholder data (title "NASA Science", the site logo as the
+// image) instead of the real entry. These must surface as upstream errors so
+// they are never shown or cached as a genuine picture.
+describe("fetchApod placeholder detection", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  function stubFetchOnce(body: unknown) {
+    vi.stubEnv("NASA_API_KEY", "test-key");
+    vi.stubEnv("MOCK_APOD", "false");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(body), { status: 200 }),
+    );
+  }
+
+  const logoUrl =
+    "https://science.nasa.gov/wp-content/themes/nasa-child/assets/images/nasa-logo@2x.png";
+
+  it("rejects the placeholder payload NASA actually returned for 2010-01-01", async () => {
+    stubFetchOnce({
+      copyright: "Stefano De Rosa",
+      date: "2010-01-01",
+      explanation: "Discover the cosmos! Each day a different image or photograph of our fascinating universe is featured.",
+      hdurl: logoUrl,
+      media_type: "image",
+      service_version: "v1",
+      title: "NASA Science",
+      url: logoUrl,
+    });
+
+    await expect(fetchApod("2010-01-01", 60)).rejects.toBeInstanceOf(ApodUpstreamError);
+  });
+
+  it("rejects the NASA logo as the image even with a real-looking title", async () => {
+    stubFetchOnce({
+      title: "Zarmina's World",
+      date: "2010-10-01",
+      explanation: "E",
+      media_type: "image",
+      url: logoUrl,
+    });
+
+    await expect(fetchApod("2010-10-01", 60)).rejects.toBeInstanceOf(ApodUpstreamError);
+  });
+
+  it("rejects the placeholder title even when the image looks real", async () => {
+    stubFetchOnce({
+      title: " NASA Science ",
+      date: "2026-11-02",
+      explanation: "E",
+      media_type: "image",
+      url: "https://apod.nasa.gov/apod/image/2611/CometMeteor.jpg",
+    });
+
+    await expect(fetchApod("2026-11-02", 60)).rejects.toBeInstanceOf(ApodUpstreamError);
+  });
+
+  it("still accepts a genuine entry whose title mentions NASA", async () => {
+    stubFetchOnce({
+      title: "NASA Science Balloon over Antarctica",
+      date: "2024-01-01",
+      explanation: "E",
+      media_type: "image",
+      url: "https://apod.nasa.gov/apod/image/2401/balloon.jpg",
+    });
+
+    const apod = await fetchApod("2024-01-01", 60);
+
+    expect(apod.title).toBe("NASA Science Balloon over Antarctica");
+    expect(apod.imageUrl).toBe("https://apod.nasa.gov/apod/image/2401/balloon.jpg");
   });
 });
